@@ -2,118 +2,103 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
-	"slices"
 	"strings"
 )
 
-var (
-	vSpace   = byte(' ')
-	vX       = byte('X')
-	vO       = byte('O')
-	vHLine   = byte('-')
-	vVLine   = byte('|')
-	vNewLine = byte('\n')
+type Cell byte
+
+const (
+	Empty Cell = iota
+	X
+	O
 )
 
-type (
-	board struct {
-		cols  [5]int
-		rows  [15]int
-		state boardState
+func (c Cell) Value() byte {
+	switch c {
+	case X:
+		return 'X'
+	case O:
+		return 'O'
+	default:
+		return ' '
 	}
+}
 
-	boardState struct {
-		current int
+type board struct {
+	cells   [9]Cell
+	current Cell
+}
+
+func NewBoard() *board {
+	return &board{current: X}
+}
+
+func (b *board) getValue(pos int) Cell {
+	return b.cells[pos]
+}
+
+func (b *board) incrementCurrent() {
+	if b.current == X {
+		b.current = O
+	} else {
+		b.current = X
 	}
-)
+}
 
-func main() {
-	// basic 3x3 board
-	for range 2 {
-		fmt.Println(" ")
-	}
-	b := &board{}
-	fmt.Printf("%v \n", b.draw())
+var winLines = [8][3]int{
+	{0, 1, 2},
+	{3, 4, 5},
+	{6, 7, 8},
+	{0, 3, 6},
+	{1, 4, 7},
+	{2, 5, 8},
+	{0, 4, 8},
+	{2, 4, 6},
+}
 
-	/**
-	  X  |  X  |  X
-	-----|-----|-----
-	  O  |  X  |  O
-	-----|-----|-----
-	  O  |  X  |  O
-	*/
-	// positions := []int{2, 8, 13}
-
-	// xo := []string{"X", "O"}
-	// b := board{}
-	// b.hLine(positions, xo)
-	// xLine(positions, xo)
-	// b.hLine(positions, xo)
-	// xLine(positions, xo)
-	// b.hLine(positions, xo)
+var rows = [3][3]int{
+	{0, 1, 2},
+	{3, 4, 5},
+	{6, 7, 8},
 }
 
 func (b *board) draw() string {
-	var data strings.Builder
+	var sb strings.Builder
+	pad := [2]byte{' ', ' '}
 
-	for range b.cols {
-		for range b.rows {
-			data.WriteByte(vO)
+	sb.WriteByte('\n')
+	for rowIdx, row := range rows {
+		for colIdx, pos := range row {
+			for _, p := range pad {
+				sb.WriteByte(p)
+			}
+			sb.WriteByte(b.cells[pos].Value())
+			for _, p := range pad {
+				sb.WriteByte(p)
+			}
+			if colIdx < len(row)-1 {
+				sb.WriteByte('|')
+			}
 		}
-		data.WriteByte(vNewLine)
-	}
+		sb.WriteByte('\n')
 
-	return data.String()
-}
-
-func (b *board) current() byte {
-	return vO
-}
-
-func (s *board) hLine(positions []int, xo []string) {
-	for i := range 15 {
-		reserved := slices.Contains(positions, i)
-
-		if reserved {
-			fmt.Printf("%v", xo[rand.Intn(2)])
-		}
-		if i == 5 {
-			fmt.Print("|")
-		}
-
-		if i == 10 {
-			fmt.Print(" |")
-		}
-
-		if i == 5 || i == 10 && !reserved {
-			// fmt.Print("|")
-		} else if !reserved {
-			fmt.Print(" ")
-		}
-
-		if i == 14 {
-			fmt.Println("")
+		if rowIdx < len(rows)-1 {
+			for i := range 3 {
+				for range 5 {
+					sb.WriteByte('-')
+				}
+				if i < 2 {
+					sb.WriteByte('|')
+				}
+			}
+			sb.WriteByte('\n')
 		}
 	}
+
+	return sb.String()
 }
 
-func xLine(positions []int, xo []string) {
-	for i := range 15 {
-		if i == 5 {
-			fmt.Print("|")
-		}
-
-		if i == 10 {
-			fmt.Print("|")
-		}
-
-		if i != 5 || i != 10 {
-			fmt.Print("-")
-		}
-
-		if i == 14 {
-			fmt.Println("")
-		}
-	}
+func main() {
+	b := NewBoard()
+	fmt.Print(b.draw())
 }
